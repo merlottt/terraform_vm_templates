@@ -1,0 +1,52 @@
+#ansible-galaxy collection install community.zabbix
+- hosts: bvg-zbx
+  tasks:
+  - name: Set API token
+    set_fact:
+     ansible_zabbix_auth_key: 59792d0ba5bd29f9e332771050cb4a2a63707b5d5b318f20a6b067e22e4fdea5
+  - name: Print list in group zbx_websites
+    debug: 
+     msg: "{{item}}"
+    loop: "{{groups['zbx_websites']|list}}"
+
+  - debug: msg="host is {{item}}"
+    with_items:  groups['zbx_websites'] 
+
+  - name: Create a new host or rewrite an existing host's info
+  # Set task level following variables for Zabbix Server host in task
+    vars:
+     ansible_network_os: community.zabbix.zabbix
+     ansible_connection: httpapi
+     ansible_httpapi_port: 80
+     #ansible_httpapi_use_ssl: true
+     #ansible_httpapi_validate_certs: false
+     ansible_zabbix_url_path: "zabbix"  # If Zabbix WebUI runs on non-default (zabbix) path ,e.g. http://<FQDN>/zabbixeu
+    become: false
+    delegate_to: bvg-zbx  # you can use delegate_to or task level ansible_host like next example
+    community.zabbix.zabbix_host:
+     host_name: WebSite {{item}}
+     visible_name: WebSite_{{item}}
+     host_groups:
+       - WebSites
+     link_templates:
+       - Website monitoring
+     status: enabled
+     state: present
+     inventory_mode: manual
+     inventory_zabbix:
+       alias: "example_alias"
+       notes: "Special Informations: {{ your_informations | default('None') }}"
+       location: "location_internet"
+     interfaces:
+       - type: 1
+         main: 1
+         useip: 0
+         dns: "{{item}}"
+         port: "10050"
+       - type: 4
+         main: 1
+         useip: 0
+         dns: "{{item}}"
+         port: "12345"
+    loop: "{{groups['zbx_websites']|list}}"
+
