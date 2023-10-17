@@ -48,5 +48,8 @@
          useip: 0
          dns: "{{item}}"
          port: "12345"
+     macros:
+      - macro: "{$WEB.URL}"
+        value: http://{{item}}
     loop: "{{groups['zbx_websites']|list}}"
 
